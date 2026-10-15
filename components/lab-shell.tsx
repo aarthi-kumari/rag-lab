@@ -4,6 +4,11 @@ import { useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChatPanel } from "@/components/chat-panel"
 import { SourcesPanel } from "@/components/sources-panel"
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { chats, messagesByChat, type Message } from "@/lib/mock-data"
 
@@ -36,10 +41,29 @@ export function LabShell() {
     <SidebarProvider className="h-svh">
       <AppSidebar activeChatId={activeChat.id} onSelectChat={setActiveChatId} />
       <SidebarInset className="min-h-0">
-        <div className="flex min-h-0 flex-1">
-          <ChatPanel title={activeChat.title} messages={messages} onSend={handleSend} />
-          <SourcesPanel />
+        <div className="flex min-h-0 flex-1 lg:hidden">
+          <ChatPanel
+            title={activeChat.title}
+            messages={messages}
+            onSend={handleSend}
+          />
         </div>
+        <ResizablePanelGroup
+          orientation="horizontal"
+          className="hidden min-h-0 flex-1 lg:flex"
+        >
+          <ResizablePanel defaultSize="70%" minSize="40%">
+            <ChatPanel
+              title={activeChat.title}
+              messages={messages}
+              onSend={handleSend}
+            />
+          </ResizablePanel>
+          <ResizableHandle withHandle aria-label="Resize sources panel" />
+          <ResizablePanel defaultSize="30%" minSize="20%" maxSize="50%">
+            <SourcesPanel />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </SidebarInset>
     </SidebarProvider>
   )

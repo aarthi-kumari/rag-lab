@@ -1,23 +1,34 @@
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sources } from "@/lib/mock-data"
 
 export function SourcesPanel() {
   return (
-    <aside className="hidden w-80 shrink-0 flex-col gap-3 border-l p-4 lg:flex">
+    <aside className="flex h-full min-h-0 flex-col gap-3 overflow-auto p-4">
       <h2 className="text-sm font-medium">Sources</h2>
       {sources.map((source) => (
         <Card key={source.id} size="sm">
           <CardHeader>
             <CardTitle>{source.title}</CardTitle>
-            <div className="flex gap-2">
-              <Badge variant="secondary">p. {source.page}</Badge>
-              <Badge variant="outline">{source.score.toFixed(2)}</Badge>
-            </div>
+            <div className="flex items-center gap-2">
+  <Badge variant="secondary">p. {source.page}</Badge>
+  <span className="font-mono text-xs font-medium text-muted-foreground">
+    {source.score.toFixed(2)}
+  </span>
+</div>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{source.excerpt}</p>
-          </CardContent>
+  <div className="flex flex-col gap-3">
+    <p className="text-muted-foreground">{source.excerpt}</p>
+    <p className="rounded-lg bg-muted px-3 py-2 text-muted-foreground">
+      “{source.quote}”
+    </p>
+    <Button type="button" variant="outline" size="sm">
+      View page
+    </Button>
+  </div>
+</CardContent>
         </Card>
       ))}
     </aside>
