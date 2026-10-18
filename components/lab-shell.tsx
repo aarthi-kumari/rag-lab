@@ -22,18 +22,34 @@ export function LabShell() {
     ...(extraMessages[activeChat.id] ?? []),
   ]
 
-  function handleSend(content: string) {
-    const next: Message[] = [
-      { id: crypto.randomUUID(), role: "user", content },
-      {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: "Streaming starts on Day 2.",
-      },
-    ]
+  async function handleSend(content: string) {
+    const chatId = activeChat.id
+  
     setExtraMessages((current) => ({
       ...current,
-      [activeChat.id]: [...(current[activeChat.id] ?? []), ...next],
+      [chatId]: [
+        ...(current[chatId] ?? []),
+        { id: crypto.randomUUID(), role: "user", content },
+      ],
+    }))
+  
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: content }),
+    })
+    const data = (await response.json()) as { text?: string; error?: string }
+  
+    setExtraMessages((current) => ({
+      ...current,
+      [chatId]: [
+        ...(current[chatId] ?? []),
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: data.text ?? data.error ?? "No reply.",
+        },
+      ],
     }))
   }
 
