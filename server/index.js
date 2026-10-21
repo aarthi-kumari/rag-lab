@@ -4,6 +4,7 @@ const fs = require("fs")
 const path = require("path")
 
 const app = express()
+const multer = require("multer")
 
 app.use(cors({ origin: "http://localhost:3000" }))
 app.use(express.json())
@@ -20,6 +21,24 @@ function readMessages() {
 function writeMessages(messages) {
   fs.mkdirSync(path.dirname(messagesPath), { recursive: true })
   fs.writeFileSync(messagesPath, JSON.stringify(messages, null, 2))
+}
+
+const uploadsDir = path.join(__dirname, "uploads")
+const filesPath = path.join(__dirname, "data", "files.json")
+fs.mkdirSync(uploadsDir, { recursive: true })
+
+const upload = multer({ dest: uploadsDir })
+
+function readFiles() {
+  if (!fs.existsSync(filesPath)) return []
+  const raw = fs.readFileSync(filesPath, "utf8")
+  if (!raw) return []
+  return JSON.parse(raw)
+}
+
+function writeFiles(files) {
+  fs.mkdirSync(path.dirname(filesPath), { recursive: true })
+  fs.writeFileSync(filesPath, JSON.stringify(files, null, 2))
 }
 
 app.get("/health", (req, res) => {
@@ -49,6 +68,37 @@ app.get("/chats/:chatId/messages", (req, res) => {
     messages.push(message)
     writeMessages(messages)
     res.status(201).json(message)
+  })
+
+  app.get("/chats/:chatId/files", (req, res) => {
+    const files = readFiles().filter((file) => file.chatId === req.params.chatId)
+    res.json(files)
+  })
+  
+  app.post("/chats/:chatId/files", upload.single("file"), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "File is required." })
+    }
+  
+    const record = {
+      id: crypto.randomUUID(),
+      chatId: req.params.chatId,
+      originalName: req.file.originalname,
+      storedName: req.file.filename,
+    }
+    const files = readFiles()
+    files.push(record)
+    writeFiles(files)
+    res.status(201).json(record)
+  })
+  
+  app.get("/uploads/:storedName", (req, res) => {
+    const storedName = path.basename(req.params.storedName)
+    const filePath = path.join(uploadsDir, storedName)
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found." })
+    }
+    res.sendFile(filePath)
   })
   
 app.listen(4000, () => {

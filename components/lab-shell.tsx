@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChatPanel } from "@/components/chat-panel"
 import { SourcesPanel } from "@/components/sources-panel"
@@ -10,47 +10,45 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { chats, messagesByChat, type Message } from "@/lib/mock-data"
+import { chats, type Message } from "@/lib/mock-data"
+
+const api = "http://localhost:4000"
+
+type StoredMessage = {
+  id: string
+  text: string
+}
 
 export function LabShell() {
   const [activeChatId, setActiveChatId] = useState(chats[0].id)
-  const [extraMessages, setExtraMessages] = useState<Record<string, Message[]>>({})
+  const [messages, setMessages] = useState<Message[]>([])
 
   const activeChat = chats.find((chat) => chat.id === activeChatId) ?? chats[0]
-  const messages = [
-    ...(messagesByChat[activeChat.id] ?? []),
-    ...(extraMessages[activeChat.id] ?? []),
-  ]
+
+  async function loadMessages(chatId: string) {
+    const response = await fetch(`${api}/chats/${chatId}/messages`)
+    const data = (await response.json()) as StoredMessage[]
+    setMessages(
+      data.map((message) => ({
+        id: message.id,
+        role: "user",
+        content: message.text,
+      }))
+    )
+  }
+
+  useEffect(() => {
+    void loadMessages(activeChat.id)
+  }, [activeChat.id])
 
   async function handleSend(content: string) {
     const chatId = activeChat.id
-  
-    setExtraMessages((current) => ({
-      ...current,
-      [chatId]: [
-        ...(current[chatId] ?? []),
-        { id: crypto.randomUUID(), role: "user", content },
-      ],
-    }))
-  
-    const response = await fetch("/api/chat", {
+    await fetch(`${api}/chats/${chatId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: content }),
+      body: JSON.stringify({ text: content }),
     })
-    const data = (await response.json()) as { text?: string; error?: string }
-  
-    setExtraMessages((current) => ({
-      ...current,
-      [chatId]: [
-        ...(current[chatId] ?? []),
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: data.text ?? data.error ?? "No reply.",
-        },
-      ],
-    }))
+    await loadMessages(chatId)
   }
 
   return (
