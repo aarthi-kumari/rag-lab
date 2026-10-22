@@ -45,6 +45,35 @@ app.get("/health", (req, res) => {
   res.json({ ok: true })
 })
 
+app.get("/chats", (req, res) => {
+  const messages = readMessages()
+  const chats = []
+  const index = new Map()
+
+  for (const message of messages) {
+    let chat = index.get(message.chatId)
+    if (!chat) {
+      chat = {
+        id: message.chatId,
+        createdAt: message.createdAt,
+        title: "",
+      }
+      index.set(message.chatId, chat)
+      chats.push(chat)
+    }
+    if (message.createdAt > chat.createdAt) {
+      chat.createdAt = message.createdAt
+    }
+    const role = message.role === "assistant" ? "assistant" : "user"
+    if (role === "user" && !chat.title) {
+      chat.title = message.text
+    }
+  }
+
+  chats.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+  res.json(chats)
+})
+
 app.get("/chats/:chatId/messages", (req, res) => {
     const messages = readMessages().filter(
       (message) => message.chatId === req.params.chatId
@@ -62,6 +91,7 @@ app.get("/chats/:chatId/messages", (req, res) => {
       id: crypto.randomUUID(),
       chatId: req.params.chatId,
       text,
+      role: req.body.role === "assistant" ? "assistant" : "user",
       createdAt: new Date().toISOString(),
     }
     const messages = readMessages()

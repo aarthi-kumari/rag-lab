@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Textarea } from "@/components/ui/textarea"
-import { suggestions, type Message } from "@/lib/mock-data"
+import { suggestions, type Message } from "@/lib/mockData"
 import { CopyIcon, RefreshCwIcon, SendIcon } from "lucide-react"
 
 export function ChatPanel({

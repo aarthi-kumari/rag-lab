@@ -13,19 +13,48 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { chats, type ChatGroup } from "@/lib/mock-data"
+import type { ChatSummary } from "@/lib/mockData"
 
-const groups: { id: ChatGroup; label: string }[] = [
+const groups = [
   { id: "today", label: "Today" },
   { id: "previous", label: "Previous 7 days" },
-]
+] as const
+
+type ChatGroup = (typeof groups)[number]["id"]
+
+function startOfToday() {
+  const date = new Date()
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+function chatGroup(createdAt: string): ChatGroup | null {
+  const date = new Date(createdAt)
+  if (date >= startOfToday()) return "today"
+  const weekAgo = startOfToday()
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  if (date >= weekAgo) return "previous"
+  return null
+}
+
+function formatWhen(createdAt: string) {
+  const date = new Date(createdAt)
+  if (date >= startOfToday()) {
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+  }
+  return date.toLocaleDateString([], { month: "short", day: "numeric" })
+}
 
 export function AppSidebar({
+  chats,
   activeChatId,
   onSelectChat,
+  onNewChat,
 }: {
+  chats: ChatSummary[]
   activeChatId: string
   onSelectChat: (id: string) => void
+  onNewChat: () => void
 }) {
   return (
     <Sidebar>
@@ -36,20 +65,21 @@ export function AppSidebar({
             Ask. Retrieve. Understand.
           </p>
         </div>
-        <Button className="w-full">
+        <Button className="w-full" onClick={onNewChat}>
           <PlusIcon data-icon="inline-start" />
           New chat
         </Button>
       </SidebarHeader>
       <SidebarContent>
-        {groups.map((group) => (
-          <SidebarGroup key={group.id}>
-            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {chats
-                  .filter((chat) => chat.group === group.id)
-                  .map((chat) => (
+        {groups.map((group) => {
+          const items = chats.filter((chat) => chatGroup(chat.createdAt) === group.id)
+          if (items.length === 0) return null
+          return (
+            <SidebarGroup key={group.id}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {items.map((chat) => (
                     <SidebarMenuItem key={chat.id}>
                       <SidebarMenuButton
                         isActive={chat.id === activeChatId}
@@ -60,16 +90,17 @@ export function AppSidebar({
                             {chat.title}
                           </span>
                           <span className="shrink-0 text-xs text-muted-foreground">
-                            {chat.when}
+                            {formatWhen(chat.createdAt)}
                           </span>
                         </span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )
+        })}
       </SidebarContent>
     </Sidebar>
   )
