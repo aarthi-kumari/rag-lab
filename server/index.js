@@ -2,6 +2,7 @@ const express = require("express")
 const cors = require("cors")
 const fs = require("fs")
 const path = require("path")
+const { ruleReply } = require("./rules")
 
 const app = express()
 const multer = require("multer")
@@ -87,15 +88,26 @@ app.get("/chats/:chatId/messages", (req, res) => {
       return res.status(400).json({ error: "Text is required." })
     }
   
+    const role = req.body.role === "assistant" ? "assistant" : "user"
     const message = {
       id: crypto.randomUUID(),
       chatId: req.params.chatId,
       text,
-      role: req.body.role === "assistant" ? "assistant" : "user",
+      role,
       createdAt: new Date().toISOString(),
     }
     const messages = readMessages()
     messages.push(message)
+    if (role === "user") {
+      const files = readFiles().filter((file) => file.chatId === req.params.chatId)
+      messages.push({
+        id: crypto.randomUUID(),
+        chatId: req.params.chatId,
+        text: ruleReply(text, files),
+        role: "assistant",
+        createdAt: new Date().toISOString(),
+      })
+    }
     writeMessages(messages)
     res.status(201).json(message)
   })

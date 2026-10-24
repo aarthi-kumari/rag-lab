@@ -101,14 +101,6 @@ export function LabShell() {
       body: JSON.stringify({ text: content, role: "user" }),
     })
     if (!saved.ok) return
-    await fetch(`${api}/chats/${chatId}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: "Model not connected yet.",
-        role: "assistant",
-      }),
-    })
     await loadChats(chatId)
     await loadMessages(chatId)
   }
