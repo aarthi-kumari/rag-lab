@@ -1,24 +1,54 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Textarea } from "@/components/ui/textarea"
 import { suggestions, type Message } from "@/lib/mockData"
-import { CopyIcon, RefreshCwIcon, SendIcon } from "lucide-react"
+import {
+  CopyIcon,
+  FileTextIcon,
+  GitCompareIcon,
+  PaperclipIcon,
+  RefreshCwIcon,
+  SearchIcon,
+  SendIcon,
+} from "lucide-react"
+
+const suggestionIcons: Record<string, typeof FileTextIcon> = {
+  "Summarize this document": FileTextIcon,
+  "Find a policy": SearchIcon,
+  "Compare documents": GitCompareIcon,
+}
+
+const chipClassName =
+  "h-10 rounded-[12px] border-border bg-background px-3 text-sm font-normal text-foreground shadow-none hover:border-indigo-400/40 hover:bg-indigo-500/10 active:bg-indigo-500/15 focus-visible:border-indigo-400/60 focus-visible:ring-2 focus-visible:ring-indigo-400/30"
+
+export type ChatFile = {
+  id: string
+  originalName: string
+  href: string
+}
 
 export function ChatPanel({
   title,
   messages,
+  files,
+  uploading,
   onSend,
+  onUpload,
 }: {
   title: string
   messages: Message[]
+  files: ChatFile[]
+  uploading: boolean
   onSend: (content: string) => void
+  onUpload: (file: File) => void
 }) {
   const [draft, setDraft] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function submit() {
     const content = draft.trim()
@@ -69,42 +99,92 @@ export function ChatPanel({
         </div>
       </ScrollArea>
       <form
-  className="mx-4 mb-4 flex flex-col gap-2 rounded-xl border bg-card p-2"
-  onSubmit={(event) => {
-    event.preventDefault()
-    submit()
-  }}
->
-  <div className="flex items-end gap-2">
-    <Textarea
-      value={draft}
-      placeholder="Ask a follow-up question..."
-      onChange={(event) => setDraft(event.target.value)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" && !event.shiftKey) {
+        className="mx-3 mb-3 flex min-w-0 flex-col gap-2 rounded-[18px] border border-border bg-card p-2.5 text-card-foreground sm:mx-4 sm:mb-4"
+        onSubmit={(event) => {
           event.preventDefault()
           submit()
-        }
-      }}
-    />
-    <Button type="submit" size="icon" aria-label="Send">
-      <SendIcon data-icon="inline-start" />
-    </Button>
-  </div>
-  <div className="flex flex-wrap gap-2">
-    {suggestions.map((suggestion) => (
-      <Button
-        key={suggestion}
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onSend(suggestion)}
+        }}
       >
-        {suggestion}
-      </Button>
-    ))}
-  </div>
-</form>
+        {files.length > 0 ? (
+          <div className="flex min-w-0 flex-wrap gap-2">
+            {files.map((file) => (
+              <Button
+                key={file.id}
+                variant="outline"
+                nativeButton={false}
+                className={chipClassName}
+                render={
+                  <a href={file.href} target="_blank" rel="noreferrer" />
+                }
+              >
+                <PaperclipIcon data-icon="inline-start" />
+                <span className="max-w-48 truncate">{file.originalName}</span>
+              </Button>
+            ))}
+          </div>
+        ) : null}
+        <div className="flex min-w-0 items-end gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              event.target.value = ""
+              if (file) onUpload(file)
+            }}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Upload file"
+            disabled={uploading}
+            className="size-11 shrink-0 rounded-[12px] text-muted-foreground hover:bg-muted hover:text-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-400/40"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <PaperclipIcon data-icon="inline-start" />
+          </Button>
+          <Textarea
+            value={draft}
+            placeholder="Ask anything about this document…"
+            className="min-h-11 min-w-0 flex-1 resize-none rounded-[14px] border-border bg-background px-3 py-2 text-sm text-foreground transition-[border-color,box-shadow] duration-150 placeholder:text-muted-foreground focus-visible:border-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-400/30 md:text-sm dark:bg-background"
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault()
+                submit()
+              }
+            }}
+          />
+          <Button
+            type="submit"
+            size="icon"
+            aria-label="Send"
+            disabled={!draft.trim()}
+            className="composer-send size-11 shrink-0 rounded-[12px] border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400/40"
+          >
+            <SendIcon data-icon="inline-start" />
+          </Button>
+        </div>
+        <div className="flex min-w-0 flex-wrap gap-2">
+          {suggestions.map((suggestion) => {
+            const Icon = suggestionIcons[suggestion]
+            return (
+              <Button
+                key={suggestion}
+                type="button"
+                variant="outline"
+                className={chipClassName}
+                onClick={() => onSend(suggestion)}
+              >
+                {Icon ? <Icon data-icon="inline-start" /> : null}
+                {suggestion}
+              </Button>
+            )
+          })}
+        </div>
+      </form>
     </section>
   )
 }

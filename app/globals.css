@@ -117,6 +117,27 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.composer-send:disabled {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  opacity: 1;
+}
+
+.composer-send:not(:disabled) {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.composer-send:not(:disabled):hover {
+  background-color: var(--primary);
+  opacity: 0.9;
+}
+
+.composer-send:not(:disabled):active {
+  background-color: var(--primary);
+  opacity: 0.8;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

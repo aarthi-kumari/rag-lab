@@ -71,6 +71,20 @@ app.get("/chats", (req, res) => {
     }
   }
 
+  for (const file of readFiles()) {
+    if (index.has(file.chatId)) continue
+    const chat = {
+      id: file.chatId,
+      createdAt:
+        typeof file.createdAt === "string"
+          ? file.createdAt
+          : new Date().toISOString(),
+      title: file.originalName,
+    }
+    index.set(file.chatId, chat)
+    chats.push(chat)
+  }
+
   chats.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
   res.json(chats)
 })
@@ -127,6 +141,7 @@ app.get("/chats/:chatId/messages", (req, res) => {
       chatId: req.params.chatId,
       originalName: req.file.originalname,
       storedName: req.file.filename,
+      createdAt: new Date().toISOString(),
     }
     const files = readFiles()
     files.push(record)
