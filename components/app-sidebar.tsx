@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -48,13 +49,17 @@ function formatWhen(createdAt: string) {
 export function AppSidebar({
   chats,
   activeChatId,
+  email,
   onSelectChat,
   onNewChat,
+  onSignOut,
 }: {
   chats: ChatSummary[]
   activeChatId: string
+  email: string
   onSelectChat: (id: string) => void
   onNewChat: () => void
+  onSignOut: () => void
 }) {
   return (
     <Sidebar>
@@ -102,6 +107,12 @@ export function AppSidebar({
           )
         })}
       </SidebarContent>
+      <SidebarFooter>
+        <p className="truncate px-2 text-xs text-muted-foreground">{email}</p>
+        <Button variant="outline" className="w-full" onClick={onSignOut}>
+          Sign out
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   )
 }

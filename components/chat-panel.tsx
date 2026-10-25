@@ -15,6 +15,7 @@ import {
   RefreshCwIcon,
   SearchIcon,
   SendIcon,
+  XIcon,
 } from "lucide-react"
 
 const suggestionIcons: Record<string, typeof FileTextIcon> = {
@@ -29,7 +30,7 @@ const chipClassName =
 export type ChatFile = {
   id: string
   originalName: string
-  href: string
+  storedName: string
 }
 
 export function ChatPanel({
@@ -39,6 +40,8 @@ export function ChatPanel({
   uploading,
   onSend,
   onUpload,
+  onOpenFile,
+  onRemoveFile,
 }: {
   title: string
   messages: Message[]
@@ -46,6 +49,8 @@ export function ChatPanel({
   uploading: boolean
   onSend: (content: string) => void
   onUpload: (file: File) => void
+  onOpenFile: (file: ChatFile) => void
+  onRemoveFile: (file: ChatFile) => void
 }) {
   const [draft, setDraft] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -108,18 +113,26 @@ export function ChatPanel({
         {files.length > 0 ? (
           <div className="flex min-w-0 flex-wrap gap-2">
             {files.map((file) => (
-              <Button
-                key={file.id}
-                variant="outline"
-                nativeButton={false}
-                className={chipClassName}
-                render={
-                  <a href={file.href} target="_blank" rel="noreferrer" />
-                }
-              >
-                <PaperclipIcon data-icon="inline-start" />
-                <span className="max-w-48 truncate">{file.originalName}</span>
-              </Button>
+              <div key={file.id} className="flex max-w-full items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={chipClassName}
+                  onClick={() => onOpenFile(file)}
+                >
+                  <PaperclipIcon data-icon="inline-start" />
+                  <span className="max-w-48 truncate">{file.originalName}</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Remove ${file.originalName}`}
+                  onClick={() => onRemoveFile(file)}
+                >
+                  <XIcon data-icon="inline-start" />
+                </Button>
+              </div>
             ))}
           </div>
         ) : null}
